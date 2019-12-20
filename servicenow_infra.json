@@ -72,7 +72,7 @@
         }
     },
     "variables": {
-        "vmTemplateUri": ""
+        "vmTemplateUri": "https://raw.githubusercontent.com/milazzom/ServiceNow-ARM-Templates/master/vm_template.json"
     },
     "resources": [
         {
