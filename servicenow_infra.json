@@ -1,0 +1,274 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "firstAppServerName": {
+            "type": "string",
+            "defaultValue": "NEWSAPP01"
+        },
+        "secondAppServerName": {
+            "type":"string",
+            "defaultValue": "NEWSAPP02"
+        },
+        "databaseServerName": {
+            "type": "string",
+            "defaultValue": "NEWSDB01"
+        },
+        "vnetId": {
+            "type": "string"
+        },
+        "appServerSubnetName": {
+            "type":"string"
+        },
+        "databaseServerSubnetName": {
+            "type":"string"
+        },
+        "appServerSize": {
+            "type": "string",
+            "defaultValue": "Standard_D8s_v3"
+        },
+        "dbServerSize": {
+            "type": "string",
+            "defaultValue": "Standard_D8s_v3"
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin username for all VMs."
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "defaultValue": "password",
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "metadata": {
+                "description": "Type of authentication to use on all VMs."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password or ssh public key for all VMs."
+            }
+        },
+        "osType": {
+            "type": "string",
+            "defaultValue": "RHEL",
+            "allowedValues": [
+                "RHEL",
+                "CentOS"
+            ],
+            "metadata": {
+                "description": "Linux distribution base to use."
+            }
+        },
+        "regionIdentifier": {
+            "type":"string",
+            "defaultValue": "A",
+            "allowedValues": ["A", "B"]
+        }
+    },
+    "variables": {
+        "vmTemplateUri": ""
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "sku": {
+                "name": "Aligned"
+            },
+            "name": "[concat('NEWSAVAPP', parameters('regionIdentifier'))]",
+            "apiVersion": "2019-03-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 3
+            }
+        },
+         {
+            "type": "Microsoft.Compute/availabilitySets",
+            "sku": {
+                "name": "Aligned"
+            },
+            "name": "[concat('NEWSAVDB', parameters('regionIdentifier'))]",
+            "apiVersion": "2019-03-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": 2,
+                "platformUpdateDomainCount": 3
+            }
+        },
+         {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('firstAppServerName'), parameters('regionIdentifier'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/NEWSAVAPP', parameters('regionIdentifier'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "adminUserName": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "osType": {
+                        "value": "[parameters('osType')]"
+                    },
+                    "serverName": {
+                        "value": "[concat(parameters('firstAppServerName'), parameters('regionIdentifier'))]"
+                    },
+                    "vnetResourceId": {
+                        "value": "[parameters('vnetId')]"
+                    },
+                    "availabilitySetId": {
+                        "value": "[resourceId('Microsoft.Compute/availabilitySets', concat('NEWSAVAPP', parameters('regionIdentifier')))]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('appServerSubnetName')]"
+                    },
+                    "serverSize": {
+                        "value": "[parameters('appServerSize')]"
+                    },
+                    "osDiskSizeGB": {
+                        "value": 128
+                    },
+                    "dataDiskSizeGB": {
+                        "value": 100
+                    },
+                    "storageDiskType": {
+                        "value": "StandardSSD_LRS"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('secondAppServerName'), parameters('regionIdentifier'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/NEWSAVAPP', parameters('regionIdentifier'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "adminUserName": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "osType": {
+                        "value": "[parameters('osType')]"
+                    },
+                    "serverName": {
+                        "value": "[concat(parameters('secondAppServerName'), parameters('regionIdentifier'))]"
+                    },
+                    "vnetResourceId": {
+                        "value": "[parameters('vnetId')]"
+                    },
+                    "availabilitySetId": {
+                        "value": "[resourceId('Microsoft.Compute/availabilitySets', concat('NEWSAVAPP', parameters('regionIdentifier')))]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('appServerSubnetName')]"
+                    },
+                    "serverSize": {
+                        "value": "[parameters('appServerSize')]"
+                    },
+                    "osDiskSizeGB": {
+                        "value": 128
+                    },
+                    "dataDiskSizeGB": {
+                        "value": 100
+                    },
+                    "storageDiskType": {
+                        "value": "StandardSSD_LRS"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "[concat(parameters('databaseServerName'), parameters('regionIdentifier'))]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/NEWSAVDB', parameters('regionIdentifier'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vmTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[resourceGroup().location]"
+                    },
+                    "adminUserName": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "authenticationType": {
+                        "value": "[parameters('authenticationType')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "osType": {
+                        "value": "[parameters('osType')]"
+                    },
+                    "serverName": {
+                        "value": "[concat(parameters('databaseServerName'), parameters('regionIdentifier'))]"
+                    },
+                    "vnetResourceId": {
+                        "value": "[parameters('vnetId')]"
+                    },
+                    "availabilitySetId": {
+                        "value": "[resourceId('Microsoft.Compute/availabilitySets', concat('NEWSAVDB', parameters('regionIdentifier')))]"
+                    },
+                    "subnetName": {
+                        "value": "[parameters('databaseServerSubnetName')]"
+                    },
+                    "serverSize": {
+                        "value": "[parameters('dbServerSize')]"
+                    },
+                    "osDiskSizeGB": {
+                        "value": 128
+                    },
+                    "dataDiskSizeGB": {
+                        "value": 2048
+                    },
+                    "storageDiskType": {
+                        "value": "StandardSSD_LRS"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
